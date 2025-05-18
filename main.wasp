@@ -35,6 +35,11 @@ action updateTranslation {
   entities: [Translation]
 }
 
+action deleteTranslation {
+  fn: import { deleteTranslation } from "@src/actions.js",
+  entities: [Translation]
+}
+
 query getTranslations {
   fn: import { getTranslations } from "@src/queries.js",
   entities: [Translation]

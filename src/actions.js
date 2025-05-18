@@ -60,3 +60,19 @@ export const updateTranslation = async ({ translationId, translatedText }, conte
     data: { translatedText }
   });
 }
+
+export const deleteTranslation = async ({ translationId }, context) => {
+  if (!context.user) { throw new HttpError(401) };
+
+  const translation = await context.entities.Translation.findUnique({
+    where: { id: translationId },
+    select: { userId: true }
+  });
+  
+  if (!translation) { throw new HttpError(404, 'Translation not found') };
+  if (translation.userId !== context.user.id) { throw new HttpError(403) };
+
+  return context.entities.Translation.delete({
+    where: { id: translationId }
+  });
+}

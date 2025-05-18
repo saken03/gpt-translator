@@ -5,6 +5,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const SYSTEM_PROMPT = "You are a professional translator specializing in Islamic religious texts. Your task is to translate Turkish texts written by Fethullah Gülen (Hocaefendi) into Kazakh. Translate the text faithfully, preserving the spiritual tone, theological accuracy, and sentence structure as much as possible. Avoid adding interpretations or explanations. Use a literary Kazakh style that remains accessible to the reader. If there are Arabic terms or Qur'anic verses, keep them in Arabic and give their Kazakh meaning accurately and respectfully. Do not summarize or omit any part of the original text.";
+
 // Simple rate limiting
 const RATE_LIMIT = {
   windowMs: 60 * 1000, // 1 minute
@@ -70,11 +72,11 @@ async function translateChunk(chunk, sourceLanguage, targetLanguage, isFirstChun
   Text to translate: "${chunk}"`;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-latest",
+    model: "gpt-4o-2024-08-06",
     messages: [
       {
         role: "system",
-        content: "You are an expert translator with deep understanding of both source and target languages, including cultural nuances, idioms, and context. Provide accurate and natural-sounding translations while preserving the original meaning and tone."
+        content: SYSTEM_PROMPT
       },
       {
         role: "user",
@@ -115,11 +117,11 @@ export async function translateText(text, sourceLanguage, targetLanguage, onProg
       }
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-latest",
+        model: "gpt-4o-2024-08-06",
         messages: [
           {
             role: "system",
-            content: "You are an expert translator with deep understanding of both source and target languages, including cultural nuances, idioms, and context. Provide accurate and natural-sounding translations while preserving the original meaning and tone."
+            content: SYSTEM_PROMPT
           },
           {
             role: "user",

@@ -2,7 +2,15 @@ import { useState } from 'react';
 import { Link } from 'wasp/client/router';
 import { useQuery } from 'wasp/client/operations';
 import { getTranslations } from 'wasp/client/operations';
-import { createTranslation } from 'wasp/client/operations';
+import { createTranslation, deleteTranslation } from 'wasp/client/operations';
+// Try-catch block for pdf-parse import
+let pdfParse;
+try {
+  // We'll use dynamic import in the handler instead
+  // pdfParse = require('pdf-parse');
+} catch (err) {
+  console.error('PDF parser not available:', err);
+}
 
 const LANGUAGES = [
   { code: 'kk', name: 'Kazakh' },
@@ -26,8 +34,21 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [pdfError, setPdfError] = useState(null);
+  const [pdfName, setPdfName] = useState('');
 
-  const { data: translations, isLoading: isLoadingTranslations } = useQuery(getTranslations);
+  const { data: translations, isLoading: isLoadingTranslations, refetch } = useQuery(getTranslations);
+
+  const handleDelete = async (translationId) => {
+    if (window.confirm('Are you sure you want to delete this translation?')) {
+      try {
+        await deleteTranslation({ translationId });
+        refetch(); // Refresh the translations list
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,6 +74,41 @@ export default function HomePage() {
     }
   };
 
+  const handlePdfUpload = async (e) => {
+    setPdfError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setPdfName(file.name);
+    if (file.type !== 'application/pdf') {
+      setPdfError('Please upload a valid PDF file.');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      // Dynamically import pdf-parse
+      let pdfParser;
+      try {
+        pdfParser = await import('pdf-parse');
+      } catch (err) {
+        console.error('Failed to load PDF parser:', err);
+        setPdfError('PDF parser not available. Try installing pdf-parse.');
+        setIsLoading(false);
+        return;
+      }
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const data = await pdfParser.default(new Uint8Array(arrayBuffer));
+      setOriginalText(data.text);
+      setIsLoading(false);
+    } catch (err) {
+      console.error('PDF extraction error:', err);
+      setPdfError('Failed to extract text from PDF: ' + (err.message || 'Unknown error'));
+      setIsLoading(false);
+    }
+  };
+
   const getProgressMessage = () => {
     if (!isLoading) return '';
     if (progress.total === 0) return 'Preparing translation...';
@@ -68,6 +124,11 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">GPT Translator</h1>
+        
+        {/* Debug element */}
+        <div style={{background: 'red', color: 'white', padding: '10px', marginBottom: '10px', textAlign: 'center'}}>
+          DEBUG: PDF UPLOAD SHOULD APPEAR BELOW
+        </div>
         
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -107,6 +168,18 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Extremely basic PDF upload */}
+          <div className="mb-4">
+            <label className="block font-bold">PDF Upload Test:</label>
+            <input 
+              type="file" 
+              accept="application/pdf" 
+              onChange={handlePdfUpload}
+            />
+            {pdfName && <div>Selected file: {pdfName}</div>}
+            {pdfError && <div style={{color: 'red'}}>{pdfError}</div>}
+          </div>
+
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Text to Translate
@@ -115,8 +188,8 @@ export default function HomePage() {
               value={originalText}
               onChange={(e) => setOriginalText(e.target.value)}
               className="w-full p-2 border rounded-md h-32"
-              placeholder="Enter text to translate..."
-              required
+              placeholder="Enter text to translate or upload a PDF file above..."
+              required={!pdfName}
               disabled={isLoading}
             />
           </div>
@@ -198,7 +271,47 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
+        {/* Translations List */}
+        {translations && translations.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-semibold mb-4">Your Translations</h2>
+            <div className="space-y-4">
+              {translations.map((translation) => (
+                <div key={translation.id} className="bg-white p-4 rounded-lg shadow-md">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="mb-2">
+                        <span className="text-sm text-gray-500">
+                          {translation.sourceLanguage} → {translation.targetLanguage}
+                        </span>
+                      </div>
+                      <div className="mb-2">
+                        <p className="text-gray-700">{translation.originalText}</p>
+                      </div>
+                      {translation.translatedText && (
+                        <div>
+                          <p className="text-gray-900">{translation.translatedText}</p>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDelete(translation.id)}
+                      className="ml-4 text-red-600 hover:text-red-800"
+                      title="Delete translation"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
