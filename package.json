@@ -2,6 +2,7 @@
   "name": "gptTranslator",
   "type": "module",
   "dependencies": {
+    "docx": "^9.5.0",
     "openai": "^4.28.0",
     "pdf-parse": "^1.1.1",
     "react": "^18.2.0",

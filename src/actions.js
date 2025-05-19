@@ -1,5 +1,6 @@
 import { HttpError } from 'wasp/server'
 import { translateText } from './gpt.js'
+import { Document, Packer, Paragraph } from 'docx';
 
 export const createTranslation = async (args, context) => {
   if (!context.user) { throw new HttpError(401) };
@@ -76,3 +77,80 @@ export const deleteTranslation = async ({ translationId }, context) => {
     where: { id: translationId }
   });
 }
+
+export const downloadTranslationDocx = async ({ translationId }, context) => {
+  if (!context.user) throw new HttpError(401);
+
+  const translation = await context.entities.Translation.findUnique({
+    where: { id: translationId, userId: context.user.id }
+  });
+  if (!translation) throw new HttpError(404, 'Translation not found');
+
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        new Paragraph({
+          text: 'Translation',
+          heading: 'TITLE',
+          spacing: { after: 300 },
+          alignment: 'center',
+          style: 'myTitleStyle',
+        }),
+        new Paragraph({
+          text: translation.translatedText || '',
+          style: 'myContentStyle',
+        }),
+      ],
+    }],
+    styles: {
+      paragraphStyles: [
+        {
+          id: 'myTitleStyle',
+          name: 'My Title Style',
+          basedOn: 'Normal',
+          next: 'Normal',
+          quickFormat: true,
+          run: {
+            size: 48, // 24pt
+            bold: true,
+            color: '2E74B5',
+            font: 'Calibri',
+          },
+          paragraph: {
+            alignment: 'center',
+            spacing: { after: 300 },
+          },
+        },
+        {
+          id: 'myContentStyle',
+          name: 'My Content Style',
+          basedOn: 'Normal',
+          next: 'Normal',
+          quickFormat: true,
+          run: {
+            size: 28, // 14pt
+            font: 'Calibri',
+            color: '222222',
+          },
+          paragraph: {
+            border: {
+              color: '2E74B5',
+              space: 4,
+              value: 'single',
+              size: 6,
+            },
+            spacing: { before: 200, after: 200 },
+            indent: { left: 400, right: 400 },
+          },
+        },
+      ],
+    },
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  return {
+    buffer: buffer.toString('base64'),
+    filename: `translation-${translationId}.docx`
+  };
+};

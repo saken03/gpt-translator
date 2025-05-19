@@ -2,6 +2,7 @@ import { useQuery } from 'wasp/client/operations';
 import { getTranslation } from 'wasp/client/operations';
 import { useParams } from 'react-router-dom';
 import { Link } from 'wasp/client/router';
+import { downloadTranslationDocx } from 'wasp/client/operations';
 
 export default function TranslationPage() {
   const { translationId } = useParams();
@@ -10,6 +11,15 @@ export default function TranslationPage() {
   // Function to safely render HTML content
   const renderHTML = (html) => {
     return { __html: html };
+  };
+
+  const handleDownload = async () => {
+    const { buffer, filename } = await downloadTranslationDocx({ translationId: translation.id });
+    const blob = new Blob([Uint8Array.from(atob(buffer), c => c.charCodeAt(0))], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
   };
 
   if (isLoading) return (
@@ -50,6 +60,9 @@ export default function TranslationPage() {
             <div className="text-sm text-gray-500">
               {translation.sourceLanguage} → {translation.targetLanguage}
             </div>
+            <button onClick={handleDownload} className="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+              Download as DOCX
+            </button>
           </div>
 
           <div className="space-y-6">

@@ -40,6 +40,11 @@ action deleteTranslation {
   entities: [Translation]
 }
 
+action downloadTranslationDocx {
+  fn: import { downloadTranslationDocx } from "@src/actions.js",
+  entities: [Translation]
+}
+
 query getTranslations {
   fn: import { getTranslations } from "@src/queries.js",
   entities: [Translation]
