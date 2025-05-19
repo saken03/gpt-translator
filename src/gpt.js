@@ -5,7 +5,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = "You are a professional translator specializing in Islamic religious texts. Your task is to translate Turkish texts written by Fethullah Gülen (Hocaefendi) into Kazakh. Translate the text faithfully, preserving the spiritual tone, theological accuracy, and sentence structure as much as possible. Avoid adding interpretations or explanations. Use a literary Kazakh style that remains accessible to the reader. If there are Arabic terms or Qur'anic verses, keep them in Arabic and give their Kazakh meaning accurately and respectfully. Do not summarize or omit any part of the original text.";
+const SYSTEM_PROMPT = "You are a professional translator specializing in Islamic religious texts. Your task is to translate Turkish texts written by Fethullah Gülen (Hocaefendi) into Kazakh. Translate the text faithfully, preserving the spiritual tone, theological accuracy, and sentence structure as much as possible. IMPORTANT: You must preserve the exact formatting of the original text, including all blank lines, paragraph breaks, bold text, italics, and any other formatting elements. For bold text, use <strong> HTML tags. For italic text, use <em> HTML tags. For headings, use the appropriate <h1>, <h2>, etc. HTML tags. Do not add interpretations or explanations. Use a literary Kazakh style that remains accessible to the reader. If there are Arabic terms or Qur'anic verses, keep them in Arabic and give their Kazakh meaning accurately and respectfully. Do not summarize or omit any part of the original text.";
 
 // Simple rate limiting
 const RATE_LIMIT = {
@@ -65,6 +65,13 @@ function splitTextIntoChunks(text, maxChunkLength = 1500) {
 async function translateChunk(chunk, sourceLanguage, targetLanguage, isFirstChunk = false, isLastChunk = false) {
   const prompt = `Translate the following ${isFirstChunk ? 'beginning' : isLastChunk ? 'end' : 'middle'} part of a longer text from ${sourceLanguage} to ${targetLanguage}. 
   Maintain the original meaning, tone, and cultural context.
+  CRITICAL: You MUST preserve the exact formatting of the original text:
+  - Keep all blank lines exactly where they appear in the original
+  - Preserve all paragraph breaks
+  - Use <strong>bold text</strong> for bold text
+  - Use <em>italic text</em> for italic text
+  - Use appropriate heading tags (<h1>, <h2>, etc.) for headings
+  - Keep all other formatting elements exactly as they appear
   If there are any idioms or cultural references, adapt them appropriately for the target language.
   Ensure the translation flows naturally with the previous and next parts.
   Only return the translated text, nothing else.
@@ -107,6 +114,13 @@ export async function translateText(text, sourceLanguage, targetLanguage, onProg
 
       const prompt = `Translate the following text from ${sourceLanguage} to ${targetLanguage}. 
       Maintain the original meaning, tone, and cultural context.
+      CRITICAL: You MUST preserve the exact formatting of the original text:
+      - Keep all blank lines exactly where they appear in the original
+      - Preserve all paragraph breaks
+      - Use <strong>bold text</strong> for bold text
+      - Use <em>italic text</em> for italic text
+      - Use appropriate heading tags (<h1>, <h2>, etc.) for headings
+      - Keep all other formatting elements exactly as they appear
       If there are any idioms or cultural references, adapt them appropriately for the target language.
       Only return the translated text, nothing else.
 

@@ -7,6 +7,11 @@ export default function TranslationPage() {
   const { translationId } = useParams();
   const { data: translation, isLoading, error } = useQuery(getTranslation, { translationId: parseInt(translationId) });
 
+  // Function to safely render HTML content
+  const renderHTML = (html) => {
+    return { __html: html };
+  };
+
   if (isLoading) return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -72,7 +77,10 @@ export default function TranslationPage() {
                 </div>
               ) : (
                 <div className="bg-gray-50 p-4 rounded-md">
-                  {translation.translatedText}
+                  <div 
+                    className="whitespace-pre-wrap font-sans"
+                    dangerouslySetInnerHTML={renderHTML(translation.translatedText)}
+                  ></div>
                 </div>
               )}
             </div>
