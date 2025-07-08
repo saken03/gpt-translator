@@ -13,6 +13,7 @@ export const Layout = () => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
+                <img src="/logo.png" alt="gptTranslator Logo" className="h-10 w-10 mr-2" />
                 <Link to="/" className="text-xl font-bold text-blue-600">
                   GPT Translator
                 </Link>

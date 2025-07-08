@@ -128,12 +128,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        <img src="/logo.png" alt="gptTranslator Logo" className="h-20 mx-auto mb-4" />
         <h1 className="text-3xl font-bold mb-8">GPT Translator</h1>
-        
-        {/* Debug element */}
-        <div style={{background: 'red', color: 'white', padding: '10px', marginBottom: '10px', textAlign: 'center'}}>
-          DEBUG: PDF UPLOAD SHOULD APPEAR BELOW
-        </div>
         
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
